@@ -250,7 +250,9 @@ static void liteeth_reset_hw(struct liteeth *priv)
 
 static int liteeth_probe(struct platform_device *pdev)
 {
+#if 0 /* FIXME(gls): why does this generate a "load access fault" below? */
 	struct device_node *np = pdev->dev.of_node;
+#endif
 	struct net_device *netdev;
 	void __iomem *buf_base;
 	struct resource *res;
@@ -321,7 +323,11 @@ static int liteeth_probe(struct platform_device *pdev)
 	priv->tx_base = buf_base + priv->num_rx_slots * LITEETH_BUFFER_SIZE;
 	priv->tx_slot = 0;
 
+#if 0 /* FIXME(gls): why does this generate a "load access fault"? */
 	mac_addr = of_get_mac_address(np);
+#else
+	mac_addr = NULL;
+#endif
 	if (mac_addr && is_valid_ether_addr(mac_addr))
 		memcpy(netdev->dev_addr, mac_addr, ETH_ALEN);
 	else
