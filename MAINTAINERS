@@ -9822,6 +9822,7 @@ S:	Maintained
 F:	Documentation/devicetree/bindings/*/litex,*.yaml
 F:	drivers/soc/litex/litex_soc_ctrl.c
 F:	include/linux/litex.h
+F:	drivers/tty/serial/liteuart.c
 
 LIVE PATCHING
 M:	Josh Poimboeuf <jpoimboe@redhat.com>
