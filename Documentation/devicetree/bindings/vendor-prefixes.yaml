@@ -571,6 +571,8 @@ patternProperties:
     description: Linux-specific binding
   "^linx,.*":
     description: Linx Technologies
+  "^litex,.*":
+    description: LiteX SoC Builder
   "^lltc,.*":
     description: Linear Technology Corporation
   "^logicpd,.*":
