@@ -76,6 +76,7 @@ config RISCV
 	select SPARSE_IRQ
 	select SYSCTL_EXCEPTION_TRACE
 	select THREAD_INFO_IN_TASK
+	select HANDLE_DOMAIN_IRQ # FIXME: should go in Kconfigs.soc !!!
 
 config ARCH_MMAP_RND_BITS_MIN
 	default 18 if 64BIT
