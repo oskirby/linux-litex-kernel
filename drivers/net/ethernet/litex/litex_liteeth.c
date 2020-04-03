@@ -364,10 +364,12 @@ static int liteeth_probe(struct platform_device *pdev)
 	priv->tx_slot = 0;
 
 	mac_addr = of_get_mac_address(np);
-	if (mac_addr && is_valid_ether_addr(mac_addr))
-		memcpy(netdev->dev_addr, mac_addr, ETH_ALEN);
-	else
+	if (IS_ERR_OR_NULL(mac_addr)) {
+		dev_warn(&pdev->dev, "using random Ethernet MAC\n");
 		eth_hw_addr_random(netdev);
+	} else {
+		ether_addr_copy(netdev->dev_addr, mac_addr);
+	}
 
 	SET_NETDEV_DEV(netdev, &pdev->dev);
 	platform_set_drvdata(pdev, netdev);
