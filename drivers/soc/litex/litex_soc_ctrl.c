@@ -30,25 +30,6 @@
 
 static DEFINE_SPINLOCK(csr_lock);
 
-static inline unsigned long read_pointer_with_barrier(
-	const volatile void __iomem *addr)
-{
-	unsigned long val;
-
-	__io_br();
-	val = *(const volatile unsigned long __force *)addr;
-	__io_ar();
-	return val;
-}
-
-static inline void write_pointer_with_barrier(
-	volatile void __iomem *addr, unsigned long val)
-{
-	__io_br();
-	*(volatile unsigned long __force *)addr = val;
-	__io_ar();
-}
-
 /*
  * LiteX SoC Generator, depending on the configuration,
  * can split a single logical CSR (Control & Status Register)
@@ -65,8 +46,8 @@ static inline void write_pointer_with_barrier(
  * the logic of writing to/reading from the LiteX CSR in a single
  * place that can be then reused by all LiteX drivers.
  */
-void litex_set_reg(
-	void __iomem *reg, unsigned long reg_size, unsigned long val)
+void litex_set_reg(void __iomem *reg, unsigned long reg_size,
+		   unsigned long val)
 {
 	unsigned long shifted_data, shift, i;
 	unsigned long flags;
@@ -76,15 +57,14 @@ void litex_set_reg(
 	for (i = 0; i < reg_size; ++i) {
 		shift = ((reg_size - i - 1) * LITEX_SUBREG_SIZE_BIT);
 		shifted_data = val >> shift;
-		write_pointer_with_barrier(
-			reg + (LITEX_REG_SIZE * i), shifted_data);
+
+		__raw_writel(shifted_data, reg + (LITEX_REG_SIZE * i));
 	}
 
 	spin_unlock_irqrestore(&csr_lock, flags);
 }
 
-unsigned long litex_get_reg(
-	void __iomem *reg, unsigned long reg_size)
+unsigned long litex_get_reg(void __iomem *reg, unsigned long reg_size)
 {
 	unsigned long shifted_data, shift, i;
 	unsigned long result = 0;
@@ -93,8 +73,8 @@ unsigned long litex_get_reg(
 	spin_lock_irqsave(&csr_lock, flags);
 
 	for (i = 0; i < reg_size; ++i) {
-		shifted_data = read_pointer_with_barrier(
-			reg + (LITEX_REG_SIZE * i));
+		shifted_data = __raw_readl(reg + (LITEX_REG_SIZE * i));
+
 		shift = ((reg_size - i - 1) * LITEX_SUBREG_SIZE_BIT);
 		result |= (shifted_data << shift);
 	}
@@ -193,12 +173,12 @@ static int litex_soc_ctrl_probe(struct platform_device *pdev)
 		return -ENODEV;
 
 	soc_ctrl_dev = devm_kzalloc(dev, sizeof(*soc_ctrl_dev), GFP_KERNEL);
-	if (IS_ERR_OR_NULL(soc_ctrl_dev))
+	if (!soc_ctrl_dev)
 		return -ENOMEM;
 
 	soc_ctrl_dev->base = devm_platform_ioremap_resource(pdev, 0);
-	if (IS_ERR_OR_NULL(soc_ctrl_dev->base))
-		return -EIO;
+	if (IS_ERR(soc_ctrl_dev->base))
+		return PTR_ERR(soc_ctrl_dev->base);
 
 	return litex_check_csr_access(soc_ctrl_dev->base);
 }
